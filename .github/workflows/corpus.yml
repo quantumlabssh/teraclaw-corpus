@@ -133,13 +133,15 @@ jobs:
       - name: Prepare toolchains
         run: |
           set -euo pipefail
-          # The hosted image ships Node 22 and pipx, but not pnpm or uv. The
-          # policies run `pnpm install` and `uv sync`, so provide both here.
+          # The hosted image ships Node 22 and pipx, but not pnpm or uv. Pin
+          # both exactly so a weekly run stays comparable: antfu/utils declares
+          # pnpm@10.17.0, and uv matches the repo CI pin.
           if ! command -v pnpm >/dev/null 2>&1; then
-            npm install -g pnpm@10
+            npm install -g pnpm@10.17.0
           fi
           if ! command -v uv >/dev/null 2>&1; then
-            pipx install uv
+            pipx install uv==0.12.23
+            mkdir -p "$HOME/.local/bin"
             echo "$HOME/.local/bin" >> "$GITHUB_PATH"
             export PATH="$HOME/.local/bin:$PATH"
           fi
