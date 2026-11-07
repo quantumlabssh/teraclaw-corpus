@@ -60,7 +60,16 @@ jobs:
             -H "content-type: application/json" \
             --data "{\"repository_id\": 1449567302, \"runner_sha256\": \"${RUNNER_SHA256}\", \"arch\": \"x86_64\"}")
           if [ "${http_code}" != "200" ]; then
-            echo "::error::licence exchange failed (http=${http_code})"
+            # Distinguish a failed licence issuance from a missing runner
+            # attachment (the route masks both as 403). The probe asks for the
+            # same licence without runner_sha256 and prints only its status.
+            probe=$(curl -sS -o probe.json -w '%{http_code}' \
+              -X POST https://teraclaw.org/api/license/ci \
+              -H "Authorization: Bearer ${LICENSE_CI_KEY}" \
+              -H "content-type: application/json" \
+              --data '{"repository_id": 1449567302}')
+            rm -f probe.json
+            echo "::error::licence exchange failed (http=${http_code}); licence-only probe http=${probe}"
             exit 1
           fi
           if ! jq -e '.license and .runner.url and .runner.bundle_url' response.json >/dev/null; then
