@@ -1,0 +1,4 @@
+checks:
+  - type: file
+    name: cargo-manifest
+    path: Cargo.toml

@@ -1,0 +1,41 @@
+name: Proof corpus
+
+# Hosted runners only. contents: read. The CI licence is the only secret.
+# Do not move this workflow onto a self-hosted runner.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  waiting:
+    if: vars.TERACLAW_RUNNER_SHA256 == ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Runner pin is not set
+        run: |
+          echo "TERACLAW_RUNNER_SHA256 is empty. The verify action is not called."
+          echo "Set the runner variables after a signed runner upload."
+
+  verify:
+    if: vars.TERACLAW_RUNNER_SHA256 != ''
+    uses: quantumlabssh/teraclaw-verify-action/.github/workflows/verify.yml@c91472d1ae06a66f0eab2d4b4570f7e6cf851b75
+    with:
+      head_sha: ${{ github.sha }}
+      base_ref: refs/heads/main
+      base_sha: ""
+      scope: verify
+      repository_id: ${{ github.repository_id }}
+      runner_sha256: ${{ vars.TERACLAW_RUNNER_SHA256 }}
+      runner_arch: x86_64
+      runner_download_host: ${{ vars.TERACLAW_RUNNER_DOWNLOAD_HOST }}
+      runner_source_commit: ${{ vars.TERACLAW_RUNNER_SOURCE_COMMIT }}
+      runner_signer_workflow: ${{ vars.TERACLAW_RUNNER_SIGNER_WORKFLOW }}
+      runner_source_repository_id: ${{ vars.TERACLAW_SOURCE_REPOSITORY_ID }}
+      workflow_tag: c91472d1ae06a66f0eab2d4b4570f7e6cf851b75
+    secrets:
+      TERACLAW_LICENSE_CI_KEY: ${{ secrets.TERACLAW_LICENSE_CI_KEY }}

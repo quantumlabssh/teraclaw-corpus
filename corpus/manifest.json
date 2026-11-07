@@ -1,0 +1,85 @@
+{
+  "note": "Pinned commits only. Policies live in this repo, not in the target. The planted entry must not end verified.",
+  "entries": [
+    {
+      "id": "antfu-utils",
+      "stack": "pnpm",
+      "repo": "https://github.com/antfu/utils.git",
+      "sha": "91f8cf73bebddae8f7ebcac82e47c9bcba9805e2",
+      "policy": "corpus/policies/antfu-utils.yaml",
+      "expect": "verified"
+    },
+    {
+      "id": "pallets-click",
+      "stack": "uv",
+      "repo": "https://github.com/pallets/click.git",
+      "sha": "8abb77a8432e03ed14a95f972b44f905279415a7",
+      "policy": "corpus/policies/pallets-click.yaml",
+      "expect": "verified"
+    },
+    {
+      "id": "dtolnay-anyhow",
+      "stack": "cargo",
+      "repo": "https://github.com/dtolnay/anyhow.git",
+      "sha": "87c8571326d60b90391d0555c9675b5ac6f044b1",
+      "policy": "corpus/policies/dtolnay-anyhow.yaml",
+      "expect": "verified"
+    },
+    {
+      "id": "anyhow-planted-fail",
+      "stack": "cargo",
+      "repo": "https://github.com/dtolnay/anyhow.git",
+      "sha": "87c8571326d60b90391d0555c9675b5ac6f044b1",
+      "policy": "corpus/policies/anyhow-planted.yaml",
+      "expect": "failed"
+    },
+    {
+      "id": "anyhow-zero-tests",
+      "stack": "cargo",
+      "repo": "https://github.com/dtolnay/anyhow.git",
+      "sha": "87c8571326d60b90391d0555c9675b5ac6f044b1",
+      "policy": "corpus/policies/anyhow-zero-tests.yaml",
+      "expect": "weak",
+      "expect_reasons": ["no_tests_ran"]
+    },
+    {
+      "id": "anyhow-structural",
+      "stack": "cargo",
+      "repo": "https://github.com/dtolnay/anyhow.git",
+      "sha": "87c8571326d60b90391d0555c9675b5ac6f044b1",
+      "policy": "corpus/policies/anyhow-structural.yaml",
+      "expect": "weak",
+      "expect_reasons": ["no_substantive_check"]
+    },
+    {
+      "id": "anyhow-deleted-test",
+      "stack": "cargo",
+      "repo": "https://github.com/dtolnay/anyhow.git",
+      "sha": "87c8571326d60b90391d0555c9675b5ac6f044b1",
+      "policy": "corpus/policies/dtolnay-anyhow.yaml",
+      "plant": "deleted-test",
+      "expect": "capped",
+      "expect_reasons": ["tests_weakened"]
+    },
+    {
+      "id": "anyhow-new-skip",
+      "stack": "cargo",
+      "repo": "https://github.com/dtolnay/anyhow.git",
+      "sha": "87c8571326d60b90391d0555c9675b5ac6f044b1",
+      "policy": "corpus/policies/dtolnay-anyhow.yaml",
+      "plant": "new-skip",
+      "expect": "capped",
+      "expect_reasons": ["tests_weakened"]
+    },
+    {
+      "id": "anyhow-workflow",
+      "stack": "cargo",
+      "repo": "https://github.com/dtolnay/anyhow.git",
+      "sha": "87c8571326d60b90391d0555c9675b5ac6f044b1",
+      "policy": "corpus/policies/dtolnay-anyhow.yaml",
+      "plant": "workflow",
+      "expect": "capped",
+      "expect_reasons": ["workflow_changed"]
+    }
+  ]
+}

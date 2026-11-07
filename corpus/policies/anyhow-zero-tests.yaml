@@ -1,0 +1,5 @@
+checks:
+  - type: command
+    name: zero-tests
+    command: python -c "print('collected 0 items')"
+    timeout_s: 30

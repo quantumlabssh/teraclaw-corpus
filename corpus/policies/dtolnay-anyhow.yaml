@@ -1,0 +1,9 @@
+setup:
+  - name: setup fetch
+    command: cargo fetch
+    timeout_s: 300
+checks:
+  - type: command
+    name: cargo-test
+    command: cargo test --offline
+    timeout_s: 600

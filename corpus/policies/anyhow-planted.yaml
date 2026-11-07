@@ -1,0 +1,5 @@
+checks:
+  - type: command
+    name: planted-failure
+    command: python -c "raise SystemExit(1)"
+    timeout_s: 30
