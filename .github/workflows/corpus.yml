@@ -1,7 +1,8 @@
 name: Proof corpus
 
-# Hosted runners only. contents: read. The CI licence is the only secret.
-# Do not move this workflow onto a self-hosted runner.
+# Hosted runners only. contents: read. No pull requests.
+# Job fetch holds the CI licence key and runs no target code.
+# Job entries runs pinned third-party repos and has no secrets.
 
 on:
   workflow_dispatch:
@@ -17,25 +18,177 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Runner pin is not set
-        run: |
-          echo "TERACLAW_RUNNER_SHA256 is empty. The verify action is not called."
-          echo "Set the runner variables after a signed runner upload."
+        run: echo "Runner hash variable is empty. The corpus is not started."
 
-  verify:
+  fetch:
     if: vars.TERACLAW_RUNNER_SHA256 != ''
-    uses: quantumlabssh/teraclaw-verify-action/.github/workflows/verify.yml@c91472d1ae06a66f0eab2d4b4570f7e6cf851b75
-    with:
-      head_sha: ${{ github.sha }}
-      base_ref: refs/heads/main
-      base_sha: ""
-      scope: verify
-      repository_id: ${{ github.repository_id }}
-      runner_sha256: ${{ vars.TERACLAW_RUNNER_SHA256 }}
-      runner_arch: x86_64
-      runner_download_host: ${{ vars.TERACLAW_RUNNER_DOWNLOAD_HOST }}
-      runner_source_commit: ${{ vars.TERACLAW_RUNNER_SOURCE_COMMIT }}
-      runner_signer_workflow: ${{ vars.TERACLAW_RUNNER_SIGNER_WORKFLOW }}
-      runner_source_repository_id: ${{ vars.TERACLAW_SOURCE_REPOSITORY_ID }}
-      workflow_tag: c91472d1ae06a66f0eab2d4b4570f7e6cf851b75
-    secrets:
-      TERACLAW_LICENSE_CI_KEY: ${{ secrets.TERACLAW_LICENSE_CI_KEY }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the bundle checker
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          repository: quantumlabssh/teraclaw-verify-action
+          ref: c91472d1ae06a66f0eab2d4b4570f7e6cf851b75
+          path: verify-action
+          persist-credentials: false
+
+      - name: Exchange the CI key and download the runner
+        env:
+          LICENSE_CI_KEY: ${{ secrets.TERACLAW_LICENSE_CI_KEY }}
+          RUNNER_SHA256: ${{ vars.TERACLAW_RUNNER_SHA256 }}
+          RUNNER_DOWNLOAD_HOST: ${{ vars.TERACLAW_RUNNER_DOWNLOAD_HOST }}
+          RUNNER_SOURCE_COMMIT: ${{ vars.TERACLAW_RUNNER_SOURCE_COMMIT }}
+          RUNNER_SIGNER_WORKFLOW: ${{ vars.TERACLAW_RUNNER_SIGNER_WORKFLOW }}
+          SOURCE_REPOSITORY_ID: ${{ vars.TERACLAW_SOURCE_REPOSITORY_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${LICENSE_CI_KEY}" ]; then
+            echo "::error::CI licence secret is unset"
+            exit 1
+          fi
+          for required in RUNNER_DOWNLOAD_HOST RUNNER_SOURCE_COMMIT RUNNER_SIGNER_WORKFLOW SOURCE_REPOSITORY_ID; do
+            if [ -z "${!required}" ]; then
+              echo "::error::${required} is unset"
+              exit 1
+            fi
+          done
+          mkdir -p dist
+          http_code=$(curl -sS -o response.json -w '%{http_code}' \
+            -X POST https://teraclaw.org/api/license/ci \
+            -H "Authorization: Bearer ${LICENSE_CI_KEY}" \
+            -H "content-type: application/json" \
+            --data "{\"repository_id\": 1449567302, \"runner_sha256\": \"${RUNNER_SHA256}\", \"arch\": \"x86_64\"}")
+          if [ "${http_code}" != "200" ]; then
+            echo "::error::licence exchange failed (http=${http_code})"
+            exit 1
+          fi
+          jq -e '.license and .runner.url and .runner.bundle_url' response.json >/dev/null
+          jq -r '.license' response.json > dist/license.json
+          runner_url=$(jq -r '.runner.url' response.json)
+          bundle_url=$(jq -r '.runner.bundle_url' response.json)
+          for url in "${runner_url}" "${bundle_url}"; do
+            host=$(python -c 'import sys, urllib.parse; print(urllib.parse.urlparse(sys.argv[1]).hostname or "")' "${url}")
+            scheme=$(python -c 'import sys, urllib.parse; print(urllib.parse.urlparse(sys.argv[1]).scheme or "")' "${url}")
+            if [ "${scheme}" != "https" ] || [ "${host}" != "${RUNNER_DOWNLOAD_HOST}" ]; then
+              echo "::error::runner URL is not HTTPS on the pinned host"
+              exit 1
+            fi
+          done
+          curl --proto '=https' --tlsv1.2 --max-redirs 0 -fsSL "${runner_url}" -o dist/runner.tar.gz
+          echo "${RUNNER_SHA256}  dist/runner.tar.gz" | sha256sum -c -
+          curl --proto '=https' --tlsv1.2 --max-redirs 0 -fsSL "${bundle_url}" -o dist/runner.sigstore.json
+          python -m pip install --quiet 'sigstore==4.5.1'
+          python verify-action/verify_runner_bundle.py \
+            --file dist/runner.tar.gz \
+            --bundle dist/runner.sigstore.json \
+            --expected-sha256 "${RUNNER_SHA256}" \
+            --signer-workflow "${RUNNER_SIGNER_WORKFLOW}" \
+            --source-commit "${RUNNER_SOURCE_COMMIT}" \
+            --source-repository-id "${SOURCE_REPOSITORY_ID}" \
+            --source-repository quantumlabssh/teraclaw
+          tar -xzf dist/runner.tar.gz -C dist
+          test -x dist/teraclaw-verify
+          rm -f response.json dist/runner.tar.gz
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: corpus-runner
+          path: |
+            dist/teraclaw-verify
+            dist/license.json
+          retention-days: 1
+
+  entries:
+    needs: fetch
+    if: vars.TERACLAW_RUNNER_SHA256 != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        entry:
+          - antfu-utils
+          - pallets-click
+          - dtolnay-anyhow
+          - anyhow-planted-fail
+          - anyhow-zero-tests
+          - anyhow-structural
+          - anyhow-deleted-test
+          - anyhow-new-skip
+          - anyhow-workflow
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: corpus-runner
+          path: runner
+
+      - name: Run one pinned entry
+        env:
+          GITHUB_TOKEN: ""
+          GH_TOKEN: ""
+        run: |
+          set -euo pipefail
+          chmod +x runner/teraclaw-verify
+          python corpus/run_entry.py \
+            --id "${{ matrix.entry }}" \
+            --root "${GITHUB_WORKSPACE}" \
+            --work "${{ runner.temp }}/corpus" \
+            --runner "${GITHUB_WORKSPACE}/runner/teraclaw-verify" \
+            --license "${GITHUB_WORKSPACE}/runner/license.json" \
+            --repository-id 1449567302
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: corpus-entry-${{ matrix.entry }}
+          path: ${{ runner.temp }}/corpus/${{ matrix.entry }}.summary.json
+          retention-days: 90
+          if-no-files-found: warn
+
+  evidence:
+    needs: entries
+    if: always() && needs.entries.result != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: corpus-entry-*
+          path: summaries
+          merge-multiple: true
+
+      - name: Write the weekly evidence file
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          rows = []
+          failed = False
+          for path in sorted(Path("summaries").glob("*.summary.json")):
+              row = json.loads(path.read_text(encoding="utf-8"))
+              rows.append(row)
+              if row.get("mismatch") or row.get("reason_gap"):
+                  failed = True
+          year, week, _ = datetime.now(timezone.utc).isocalendar()
+          out = Path(f"corpus-{year}-W{week:02d}.md")
+          lines = ["# Corpus evidence", ""]
+          for row in rows:
+              lines.append(f"- {row.get('id')}: expect {row.get('expect')}, got {row.get('level')}")
+          out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          if failed or not rows:
+              raise SystemExit(1)
+          PY
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: corpus-week
+          path: corpus-*.md
+          retention-days: 90
+          if-no-files-found: warn
