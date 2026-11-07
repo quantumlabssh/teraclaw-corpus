@@ -130,6 +130,22 @@ jobs:
           name: corpus-runner
           path: runner
 
+      - name: Prepare toolchains
+        run: |
+          set -euo pipefail
+          # The hosted image ships Node 22 and pipx, but not pnpm or uv. The
+          # policies run `pnpm install` and `uv sync`, so provide both here.
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm install -g pnpm@10
+          fi
+          if ! command -v uv >/dev/null 2>&1; then
+            pipx install uv
+            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.local/bin:$PATH"
+          fi
+          pnpm --version
+          uv --version
+
       - name: Run one pinned entry
         env:
           GITHUB_TOKEN: ""
