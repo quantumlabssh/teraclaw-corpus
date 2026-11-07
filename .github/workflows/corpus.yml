@@ -63,7 +63,10 @@ jobs:
             echo "::error::licence exchange failed (http=${http_code})"
             exit 1
           fi
-          jq -e '.license and .runner.url and .runner.bundle_url' response.json >/dev/null
+          if ! jq -e '.license and .runner.url and .runner.bundle_url' response.json >/dev/null; then
+            echo "::error::licence exchange returned no runner URL (keys: $(jq -r 'keys | join(",")' response.json))"
+            exit 1
+          fi
           jq -r '.license' response.json > dist/license.json
           runner_url=$(jq -r '.runner.url' response.json)
           bundle_url=$(jq -r '.runner.bundle_url' response.json)
@@ -71,7 +74,7 @@ jobs:
             host=$(python -c 'import sys, urllib.parse; print(urllib.parse.urlparse(sys.argv[1]).hostname or "")' "${url}")
             scheme=$(python -c 'import sys, urllib.parse; print(urllib.parse.urlparse(sys.argv[1]).scheme or "")' "${url}")
             if [ "${scheme}" != "https" ] || [ "${host}" != "${RUNNER_DOWNLOAD_HOST}" ]; then
-              echo "::error::runner URL is not HTTPS on the pinned host"
+              echo "::error::runner URL is not HTTPS on the pinned host (got ${scheme}://${host})"
               exit 1
             fi
           done

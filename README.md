@@ -32,3 +32,19 @@ other mismatch.
 
 The runner hash variable stays empty until a signed runner exists. While it
 is empty, `fetch` and `entries` do not run.
+
+## Repository variables
+
+Set these after the signed runner is uploaded. `fetch` fails if any of the
+last four is empty.
+
+| Variable | Value |
+| --- | --- |
+| `TERACLAW_RUNNER_SHA256` | SHA-256 of the signed archive. Empty keeps the corpus dormant. |
+| `TERACLAW_RUNNER_DOWNLOAD_HOST` | Presign host, `<account>.r2.cloudflarestorage.com`. |
+| `TERACLAW_RUNNER_SOURCE_COMMIT` | `github.sha` of the run that built the runner. |
+| `TERACLAW_RUNNER_SIGNER_WORKFLOW` | `quantumlabssh/teraclaw/.github/workflows/release-verify-runner.yml@<ref>`, matching the certificate. |
+| `TERACLAW_SOURCE_REPOSITORY_ID` | `1156873560`. |
+
+The website needs `R2_VERIFY_READ_*` for the private `teraclaw-verify` bucket;
+without it the licence exchange returns no runner URL.
