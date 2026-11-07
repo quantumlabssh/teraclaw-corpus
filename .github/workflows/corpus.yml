@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           repository: quantumlabssh/teraclaw-verify-action
-          ref: c91472d1ae06a66f0eab2d4b4570f7e6cf851b75
+          ref: 33105aaeb4af154d5dda0492a761019f86eef84f
           path: verify-action
           persist-credentials: false
 
