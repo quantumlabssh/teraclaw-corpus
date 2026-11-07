@@ -154,13 +154,17 @@ jobs:
           GH_TOKEN: ""
         run: |
           set -euo pipefail
-          chmod +x runner/teraclaw-verify/teraclaw-verify
+          runner_bin=$(find runner -type f -name teraclaw-verify | head -n 1)
+          license_file=$(find runner -type f -name license.json | head -n 1)
+          test -n "$runner_bin"
+          test -n "$license_file"
+          chmod +x "$runner_bin"
           python corpus/run_entry.py \
             --id "${{ matrix.entry }}" \
             --root "${GITHUB_WORKSPACE}" \
             --work "${{ runner.temp }}/corpus" \
-            --runner "${GITHUB_WORKSPACE}/runner/teraclaw-verify/teraclaw-verify" \
-            --license "${GITHUB_WORKSPACE}/runner/license.json" \
+            --runner "$runner_bin" \
+            --license "$license_file" \
             --repository-id 1449567302
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
