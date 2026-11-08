@@ -68,17 +68,30 @@ def _commit(dest: Path, message: str) -> str:
     return sha
 
 
-def _apply_plant(dest: Path, kind: str) -> None:
-    if kind == "deleted-test":
-        target = dest / "tests" / "test_fmt.rs"
+def _apply_plant(dest: Path, kind: str, entry: dict) -> None:
+    if kind in {"deleted-test", "new-skip"}:
+        relative = str(entry.get("plant_file") or "tests/test_fmt.rs")
+        target = dest / relative
         if not target.is_file():
             raise RuntimeError(f"plant target missing: {target}")
-        target.unlink()
-        return
-    if kind == "new-skip":
-        target = dest / "tests" / "test_fmt.rs"
-        text = target.read_text(encoding="utf-8")
-        target.write_text("#[ignore]\n" + text, encoding="utf-8")
+        if kind == "deleted-test":
+            target.unlink()
+            return
+        # Append, so the added lines carry the language's own skip marker. A
+        # snippet is required for anything but Rust: the corpus may not assume
+        # one language's syntax.
+        snippet = entry.get("plant_snippet")
+        if snippet:
+            target.write_text(
+                target.read_text(encoding="utf-8")
+                + str(snippet).replace("\\n", "\n"),
+                encoding="utf-8",
+            )
+        else:
+            target.write_text(
+                "#[ignore]\n" + target.read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
         return
     if kind == "workflow":
         workflow = dest / ".github" / "workflows"
@@ -146,7 +159,7 @@ def main() -> int:
     plant = str(entry.get("plant") or "")
     tip = pin
     if plant:
-        _apply_plant(dest, plant)
+        _apply_plant(dest, plant, entry)
         tip = _commit(dest, f"corpus plant {plant}")
 
     # The runner needs a writable data dir and an instance signing key, the same

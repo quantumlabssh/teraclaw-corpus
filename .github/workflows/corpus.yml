@@ -142,6 +142,10 @@ jobs:
           - anyhow-deleted-test
           - anyhow-new-skip
           - anyhow-workflow
+          - antfu-utils-deleted-test
+          - antfu-utils-new-skip
+          - pallets-click-deleted-test
+          - pallets-click-new-skip
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:

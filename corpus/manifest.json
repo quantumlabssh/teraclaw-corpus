@@ -80,6 +80,52 @@
       "plant": "workflow",
       "expect": "capped",
       "expect_reasons": ["workflow_changed"]
+    },
+    {
+      "id": "antfu-utils-deleted-test",
+      "stack": "pnpm",
+      "repo": "https://github.com/antfu/utils.git",
+      "sha": "91f8cf73bebddae8f7ebcac82e47c9bcba9805e2",
+      "policy": "corpus/policies/antfu-utils.yaml",
+      "plant": "deleted-test",
+      "plant_file": "src/string.test.ts",
+      "expect": "capped",
+      "expect_reasons": ["tests_weakened"]
+    },
+    {
+      "id": "antfu-utils-new-skip",
+      "stack": "pnpm",
+      "repo": "https://github.com/antfu/utils.git",
+      "sha": "91f8cf73bebddae8f7ebcac82e47c9bcba9805e2",
+      "policy": "corpus/policies/antfu-utils.yaml",
+      "plant": "new-skip",
+      "plant_file": "src/string.test.ts",
+      "plant_snippet": "\\n\\nimport { it } from 'vitest';\\n\\nit.skip('corpus plant', () => {});\\n",
+      "expect": "capped",
+      "expect_reasons": ["tests_weakened"]
+    },
+    {
+      "id": "pallets-click-deleted-test",
+      "stack": "uv",
+      "repo": "https://github.com/pallets/click.git",
+      "sha": "8abb77a8432e03ed14a95f972b44f905279415a7",
+      "policy": "corpus/policies/pallets-click.yaml",
+      "plant": "deleted-test",
+      "plant_file": "tests/test_basic.py",
+      "expect": "capped",
+      "expect_reasons": ["tests_weakened"]
+    },
+    {
+      "id": "pallets-click-new-skip",
+      "stack": "uv",
+      "repo": "https://github.com/pallets/click.git",
+      "sha": "8abb77a8432e03ed14a95f972b44f905279415a7",
+      "policy": "corpus/policies/pallets-click.yaml",
+      "plant": "new-skip",
+      "plant_file": "tests/test_basic.py",
+      "plant_snippet": "\\n\\nimport pytest  # noqa: E402\\n\\n@pytest.mark.skip(reason=\"corpus plant\")\\ndef test_corpus_plant():\\n    pass\\n",
+      "expect": "capped",
+      "expect_reasons": ["tests_weakened"]
     }
   ]
 }
