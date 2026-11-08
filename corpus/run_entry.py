@@ -10,14 +10,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 
-def _run(argv: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(argv, cwd=cwd, check=False, capture_output=True, text=True)
+def _run(
+    argv: list[str], cwd: Path | None = None, env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        argv, cwd=cwd, env=env, check=False, capture_output=True, text=True
+    )
 
 
 def _clone(url: str, sha: str, dest: Path) -> None:
@@ -127,6 +132,17 @@ def main() -> int:
         _apply_plant(dest, plant)
         tip = _commit(dest, f"corpus plant {plant}")
 
+    # The runner needs a writable data dir and an instance signing key, the same
+    # way the reusable action sets them. Without a key the receipt is unsigned
+    # and the run exits 2 before any check.
+    data_dir = Path(args.work) / f"{args.id}.teraclaw-run"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    run_env = {
+        **os.environ,
+        "TERACLAW_DATA_DIR": str(data_dir),
+        "TERACLAW_INSTANCE_KEY_PATH": str(data_dir / "instance_key"),
+    }
+
     proc = _run(
         [
             args.runner,
@@ -151,7 +167,8 @@ def main() -> int:
             str(out),
             "--title",
             f"corpus {args.id}",
-        ]
+        ],
+        env=run_env,
     )
     level = "error"
     reasons: list[str] = []
