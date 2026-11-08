@@ -177,8 +177,11 @@ def main() -> int:
         assurance = result.get("assurance") or {}
         level = str(assurance.get("level") or result.get("status") or "")
         reasons = [str(reason) for reason in (assurance.get("reasons") or [])]
-    elif proc.stderr.strip():
-        reasons = [proc.stderr.strip()[:200]]
+    else:
+        # No receipt: keep whatever the runner said. Empty stderr plus a zero
+        # output run is itself a finding, so name the exit code.
+        detail = proc.stderr.strip() or proc.stdout.strip()
+        reasons = [detail[-400:]] if detail else [f"runner exited {proc.returncode} with no output"]
 
     mismatch = _mismatch(str(entry.get("expect") or ""), level)
     reason_gap = _reason_gap(entry.get("expect_reasons"), reasons)
@@ -189,6 +192,7 @@ def main() -> int:
         "expect": entry.get("expect"),
         "level": level,
         "reasons": reasons,
+        "exit_code": proc.returncode,
         "mismatch": mismatch,
         "reason_gap": reason_gap,
     }
