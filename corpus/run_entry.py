@@ -165,6 +165,10 @@ def main() -> int:
             "verify",
             "--out",
             str(out),
+            # Without --full the runner writes the DSSE receipt envelope, which
+            # has no ``assurance``/``status`` keys, so the harness would read an
+            # empty level even on a verified run.
+            "--full",
             "--title",
             f"corpus {args.id}",
         ],
