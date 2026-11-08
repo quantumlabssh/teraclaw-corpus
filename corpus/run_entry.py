@@ -91,6 +91,23 @@ def _apply_plant(dest: Path, kind: str) -> None:
     raise RuntimeError(f"unknown plant {kind}")
 
 
+RUN_LEVELS = {"verified", "weak", "capped", "failed", "accepted"}
+
+
+def _level_from_result(result: dict) -> tuple[str, list[str]]:
+    """Read the assurance level, or fail the entry when it is absent.
+
+    Reading the wrong shape is how an empty level once looked like a clean run;
+    a result without a known level must never be treated as a pass.
+    """
+    assurance = result.get("assurance") or {}
+    level = str(assurance.get("level") or result.get("status") or "").strip()
+    reasons = [str(reason) for reason in (assurance.get("reasons") or [])]
+    if level not in RUN_LEVELS:
+        return "error", reasons + ["missing_level"]
+    return level, reasons
+
+
 def _mismatch(expect: str, level: str) -> str | None:
     expected = (expect or "").strip()
     actual = (level or "").strip()
@@ -177,10 +194,9 @@ def main() -> int:
     level = "error"
     reasons: list[str] = []
     if out.is_file():
-        result = json.loads(out.read_text(encoding="utf-8"))
-        assurance = result.get("assurance") or {}
-        level = str(assurance.get("level") or result.get("status") or "")
-        reasons = [str(reason) for reason in (assurance.get("reasons") or [])]
+        level, reasons = _level_from_result(
+            json.loads(out.read_text(encoding="utf-8"))
+        )
     else:
         # No receipt: keep whatever the runner said. Empty stderr plus a zero
         # output run is itself a finding, so name the exit code.

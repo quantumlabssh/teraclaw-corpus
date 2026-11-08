@@ -13,6 +13,18 @@ permissions:
   contents: read
 
 jobs:
+  harness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the harness checks
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Check the harness
+        run: python corpus/test_run_entry.py
+
   waiting:
     if: vars.TERACLAW_RUNNER_SHA256 == ''
     runs-on: ubuntu-latest
@@ -21,6 +33,7 @@ jobs:
         run: echo "Runner hash variable is empty. The corpus is not started."
 
   fetch:
+    needs: harness
     if: vars.TERACLAW_RUNNER_SHA256 != ''
     runs-on: ubuntu-latest
     timeout-minutes: 20
