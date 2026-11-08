@@ -41,10 +41,12 @@ last four is empty.
 | Variable | Value |
 | --- | --- |
 | `TERACLAW_RUNNER_SHA256` | SHA-256 of the signed archive. Empty keeps the corpus dormant. |
-| `TERACLAW_RUNNER_DOWNLOAD_HOST` | Presign host, `<account>.r2.cloudflarestorage.com`. |
+| `TERACLAW_RUNNER_DOWNLOAD_HOST` | `0c3b1eaf3761b5f9aee5c81675890a3f.r2.cloudflarestorage.com`. This is the release account (`R2_ACCOUNT_ID`), not the images account. |
 | `TERACLAW_RUNNER_SOURCE_COMMIT` | `github.sha` of the run that built the runner. |
 | `TERACLAW_RUNNER_SIGNER_WORKFLOW` | Workflow ref in the certificate: `quantumlabssh/teraclaw/.github/workflows/release-verify-runner.yml@<ref>`, or the absolute `https://github.com/...` form. |
 | `TERACLAW_SOURCE_REPOSITORY_ID` | `1156873560`. |
 
-The website needs `R2_VERIFY_READ_*` for the private `teraclaw-verify` bucket;
-without it the licence exchange returns no runner URL.
+The website needs `R2_VERIFY_READ_*` and `R2_VERIFY_ACCOUNT_ID` for the private
+`teraclaw-verify` bucket; without them the licence exchange returns no runner
+URL. `R2_VERIFY_ACCOUNT_ID` must be the account that owns the bucket, which is
+the release account used by the upload workflow, not the images account.
