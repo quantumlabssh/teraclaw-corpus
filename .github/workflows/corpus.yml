@@ -37,6 +37,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Licence API User-Agent probe
+        run: python corpus/license_ua_probe.py
+
       - name: Licence refusal probe
         env:
           TERACLAW_PROBE_READ_TOKEN: ${{ secrets.TERACLAW_PROBE_READ_TOKEN }}

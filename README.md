@@ -19,6 +19,12 @@ return `403 license_request_sig_invalid`. It never checks out or runs a target
 repo. Before configuration it prints `::warning::license probe not configured`;
 once `TERACLAW_PROBE_CONFIGURED=true` is set, a missing secret fails the job.
 
+The same job first runs `corpus/license_ua_probe.py`. The engine and verify
+User-Agents must get JSON, and default `Python-urllib` is the Browser Integrity
+Check baseline: teraclaw.org answers `403 text/plain` with `error code: 1010`.
+A challenge for the engine or verify client fails the job; if Python-urllib
+stops being blocked, the job warns so a Cloudflare setting change is visible.
+
 `fetch` holds `TERACLAW_LICENSE_CI_KEY` and runs no target code. It exchanges
 the key for a CI licence bound to repository `1449567302`, downloads the
 runner, and checks the SHA-256 and Sigstore bundle. It passes the runner
