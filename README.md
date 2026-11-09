@@ -10,7 +10,14 @@ start it.
 `permissions` is `contents: read`. The corpus does not post GitHub checks. A
 false `verified` fails the job. Weekly evidence is the entry summary artifact.
 
-## Two jobs
+## Three jobs
+
+`license-probe` runs only this repository's `corpus/license_refusal_probe.py`
+and a separate teraclaw.org test-account token. It sends a wrong refresh
+signature for the test licence/install pair and for unknown ids; both must
+return `403 license_request_sig_invalid`. It never checks out or runs a target
+repo. Before configuration it prints `::warning::license probe not configured`;
+once `TERACLAW_PROBE_CONFIGURED=true` is set, a missing secret fails the job.
 
 `fetch` holds `TERACLAW_LICENSE_CI_KEY` and runs no target code. It exchanges
 the key for a CI licence bound to repository `1449567302`, downloads the
@@ -32,6 +39,22 @@ other mismatch.
 
 The runner hash variable stays empty until a signed runner exists. While it
 is empty, `fetch` and `entries` do not run.
+
+## Probe secrets and variable
+
+Create a separate teraclaw.org test account with its own internal grant and one
+activation. Mint a read-only key there. Do **not** use the owner's licence.
+
+| Name | Kind | Value |
+| --- | --- | --- |
+| `TERACLAW_PROBE_READ_TOKEN` | secret | read-only test-account key |
+| `TERACLAW_PROBE_LICENSE_ID` | secret | test-account `license_id` |
+| `TERACLAW_PROBE_INSTALL_ID` | secret | matching `install_id` |
+| `TERACLAW_PROBE_CONFIGURED` | variable | `true` once the three secrets exist |
+
+While `TERACLAW_PROBE_CONFIGURED` is unset or not `true`, the job prints
+`::warning::license probe not configured` and passes. Once it is `true`, a
+missing secret fails the job. The probe prints only status/error codes.
 
 ## Repository variables
 

@@ -3,6 +3,7 @@ name: Proof corpus
 # Hosted runners only. contents: read. No pull requests.
 # Job fetch holds the CI licence key and runs no target code.
 # Job entries runs pinned third-party repos and has no secrets.
+# Job license-probe runs only this repo and a separate test-account token.
 
 on:
   workflow_dispatch:
@@ -24,6 +25,25 @@ jobs:
 
       - name: Check the harness
         run: python corpus/test_run_entry.py
+
+  # Trusted-code job: no target checkout, setup script, or test runs here.
+  # Uses a separate test-account licence, not the owner's.
+  license-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the probe
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Licence refusal probe
+        env:
+          TERACLAW_PROBE_READ_TOKEN: ${{ secrets.TERACLAW_PROBE_READ_TOKEN }}
+          TERACLAW_PROBE_LICENSE_ID: ${{ secrets.TERACLAW_PROBE_LICENSE_ID }}
+          TERACLAW_PROBE_INSTALL_ID: ${{ secrets.TERACLAW_PROBE_INSTALL_ID }}
+          TERACLAW_PROBE_CONFIGURED: ${{ vars.TERACLAW_PROBE_CONFIGURED }}
+        run: python corpus/license_refusal_probe.py
 
   waiting:
     if: vars.TERACLAW_RUNNER_SHA256 == ''
