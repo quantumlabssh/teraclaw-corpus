@@ -29,8 +29,11 @@ import urllib.request
 from datetime import datetime, timezone
 
 BASE = "https://teraclaw.org"
-# Keep in sync with teraclaw_engine.licensing.user_agents.ENGINE_USER_AGENT.
-USER_AGENT = "TeraClaw-Engine/0.9.10 (+https://teraclaw.org)"
+# Keep in sync with teraclaw_engine._version.__version__. The engine repo's
+# scripts/sync-version.mjs fails when this marker is stale and its sibling
+# teraclaw-corpus checkout is present.
+ENGINE_VERSION = "0.9.10"
+USER_AGENT = f"TeraClaw-Engine/{ENGINE_VERSION} (+https://teraclaw.org)"
 WRONG_SIG = f"ed25519:{'00' * 64}"
 
 

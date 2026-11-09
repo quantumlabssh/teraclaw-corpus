@@ -56,6 +56,11 @@ While `TERACLAW_PROBE_CONFIGURED` is unset or not `true`, the job prints
 `::warning::license probe not configured` and passes. Once it is `true`, a
 missing secret fails the job. The probe prints only status/error codes.
 
+`ENGINE_VERSION` in the probe must match the engine's `_version.py`. The engine
+repo's `scripts/sync-version.mjs` fails when a sibling `../teraclaw-corpus`
+checkout is present and the marker is stale, so `pnpm sync-version` catches the
+drift before a release.
+
 ## Repository variables
 
 Set these after the signed runner is uploaded. `fetch` fails if any of the
