@@ -87,8 +87,13 @@ def main() -> int:
         ("engine", ENGINE_UA, "/api/license/refresh", 401, "Unauthorized"),
         ("verify", VERIFY_UA, "/api/license/ci", 403, "license_ci_unavailable"),
     ):
-        status, code, content_type, _raw = _request("POST", path, user_agent, b"{}")
-        ok = status == expected_status and code == expected_code and "json" in content_type
+        status, code, content_type, raw = _request("POST", path, user_agent, b"{}")
+        ok = (
+            status == expected_status
+            and code == expected_code
+            and "json" in content_type
+            and "error code: 1010" not in raw
+        )
         print(
             f"{label} ua={user_agent.split('/')[0]} path={path} "
             f"status={status} error={code or '-'} content_type={content_type or '-'} "

@@ -24,6 +24,9 @@ User-Agents must get JSON, and default `Python-urllib` is the Browser Integrity
 Check baseline: teraclaw.org answers `403 text/plain` with `error code: 1010`.
 A challenge for the engine or verify client fails the job; if Python-urllib
 stops being blocked, the job warns so a Cloudflare setting change is visible.
+The harness check includes a regression test that a 403 `error code: 1010`
+block is not mistaken for the verify client's JSON `license_ci_unavailable`
+refusal, even though both use status 403.
 
 `fetch` holds `TERACLAW_LICENSE_CI_KEY` and runs no target code. It exchanges
 the key for a CI licence bound to repository `1449567302`, downloads the
