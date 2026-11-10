@@ -46,6 +46,9 @@ The pin is the policy ref and the merge-base. The corpus policy file is this
 repo's file, not the target's. The job fails on a false `verified` or any
 other mismatch.
 
+A new manifest row also needs its id in the workflow matrix. The owner adds
+that line; an entry in the manifest alone does not run.
+
 The runner hash variable stays empty until a signed runner exists. While it
 is empty, `fetch` and `entries` do not run.
 
