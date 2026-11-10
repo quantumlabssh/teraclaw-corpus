@@ -1,0 +1,9 @@
+setup:
+  - name: setup venv
+    command: python -m venv .venv && .venv/bin/pip install --disable-pip-version-check -e . pytest freezegun
+    timeout_s: 600
+checks:
+  - type: command
+    name: pytest
+    command: .venv/bin/python -m pytest -q
+    timeout_s: 600

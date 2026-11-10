@@ -1,0 +1,9 @@
+setup:
+  - name: setup install
+    command: npm install --no-audit --no-fund
+    timeout_s: 600
+checks:
+  - type: command
+    name: npm-test
+    command: npm test
+    timeout_s: 600

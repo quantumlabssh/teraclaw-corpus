@@ -34,9 +34,9 @@ runner, and checks the SHA-256 and Sigstore bundle. It passes the runner
 binary and the licence document on as an artifact. The key is not in that
 artifact.
 
-`entries` is a matrix with no secrets. For each row in `corpus/manifest.json`
-it clones the pinned SHA, applies a planted case as a commit on top of that
-pin, and runs:
+`entries` is a matrix with no secrets. It covers pnpm, npm, uv, pip, cargo, and
+Go targets. For each row in `corpus/manifest.json` it clones the pinned SHA,
+applies a planted case as a commit on top of that pin, and runs:
 
 ```text
 teraclaw-verify run --repo <clone> --sha <tip> --policy-ref <pin> --policy-file <corpus policy>

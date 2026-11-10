@@ -157,6 +157,9 @@ jobs:
       matrix:
         entry:
           - antfu-utils
+          - npm-is-plain-obj
+          - pip-itsdangerous
+          - go-google-uuid
           - pallets-click
           - dtolnay-anyhow
           - anyhow-planted-fail

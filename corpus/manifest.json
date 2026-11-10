@@ -2,6 +2,30 @@
   "note": "Pinned commits only. Policies live in this repo, not in the target. The planted entry must not end verified.",
   "entries": [
     {
+      "id": "npm-is-plain-obj",
+      "stack": "npm",
+      "repo": "https://github.com/sindresorhus/is-plain-obj.git",
+      "sha": "3b33a59bd31fdee17acebeb0f9e39b6eca007719",
+      "policy": "corpus/policies/npm-is-plain-obj.yaml",
+      "expect": "verified"
+    },
+    {
+      "id": "pip-itsdangerous",
+      "stack": "pip",
+      "repo": "https://github.com/pallets/itsdangerous.git",
+      "sha": "629bedb84ee95758388dda140cc740f12b52d4d5",
+      "policy": "corpus/policies/pip-itsdangerous.yaml",
+      "expect": "verified"
+    },
+    {
+      "id": "go-google-uuid",
+      "stack": "go",
+      "repo": "https://github.com/google/uuid.git",
+      "sha": "0f11ee6918f41a04c201eceeadf612a377bc7fbc",
+      "policy": "corpus/policies/go-google-uuid.yaml",
+      "expect": "verified"
+    },
+    {
       "id": "antfu-utils",
       "stack": "pnpm",
       "repo": "https://github.com/antfu/utils.git",
