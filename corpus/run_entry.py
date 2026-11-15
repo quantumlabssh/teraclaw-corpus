@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 def _run(
@@ -68,6 +69,15 @@ def _commit(dest: Path, message: str) -> str:
     return sha
 
 
+def repository_slug(repo_url: str) -> str:
+    """`owner/name` from a git URL (the repo the receipt should name)."""
+    path = urlparse(repo_url).path.strip("/")
+    parts = [part for part in path.split("/") if part]
+    if len(parts) < 2:
+        return ""
+    return f"{parts[0]}/{parts[1].removesuffix('.git')}"
+
+
 def _apply_plant(dest: Path, kind: str, entry: dict) -> None:
     if kind in {"deleted-test", "new-skip"}:
         relative = str(entry.get("plant_file") or "tests/test_fmt.rs")
@@ -88,8 +98,12 @@ def _apply_plant(dest: Path, kind: str, entry: dict) -> None:
                 encoding="utf-8",
             )
         else:
+            # A bare `#[ignore]` prepended to a Rust file is placed before its
+            # `use` items, which does not compile (so the corpus tested a build
+            # error, not skip detection). Append a real ignored test instead.
             target.write_text(
-                "#[ignore]\n" + target.read_text(encoding="utf-8"),
+                target.read_text(encoding="utf-8").rstrip()
+                + "\n\n#[test]\n#[ignore]\nfn teraclaw_corpus_plant() {}\n",
                 encoding="utf-8",
             )
         return
@@ -173,6 +187,9 @@ def main() -> int:
         "TERACLAW_INSTANCE_KEY_PATH": str(data_dir / "instance_key"),
     }
 
+    target_repository = repository_slug(str(entry.get("repo") or "")) or (
+        "quantumlabssh/teraclaw-corpus"
+    )
     proc = _run(
         [
             args.runner,
@@ -188,7 +205,7 @@ def main() -> int:
             "--license-file",
             args.license,
             "--repository",
-            "quantumlabssh/teraclaw-corpus",
+            target_repository,
             "--repository-id",
             str(args.repository_id),
             "--scope",

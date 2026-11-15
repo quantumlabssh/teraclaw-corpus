@@ -8,7 +8,7 @@ name: Proof corpus
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "0 6 * * 1"
 
 permissions:
   contents: read
@@ -53,7 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Runner pin is not set
-        run: echo "Runner hash variable is empty. The corpus is not started."
+        run: |
+          echo "::error::TERACLAW_RUNNER_SHA256 is empty; the corpus did not run"
+          exit 1
 
   fetch:
     needs: harness
@@ -156,6 +158,9 @@ jobs:
       fail-fast: false
       matrix:
         entry:
+          - npm-is-plain-obj
+          - pip-itsdangerous
+          - go-google-uuid
           - antfu-utils
           - pallets-click
           - dtolnay-anyhow
@@ -247,8 +252,37 @@ jobs:
           for path in sorted(Path("summaries").glob("*.summary.json")):
               row = json.loads(path.read_text(encoding="utf-8"))
               rows.append(row)
-              if row.get("mismatch") or row.get("reason_gap"):
+              if (
+                  row.get("mismatch")
+                  or row.get("reason_gap")
+                  or row.get("level") == "error"
+              ):
                   failed = True
+          expected = {
+              "npm-is-plain-obj",
+              "pip-itsdangerous",
+              "go-google-uuid",
+              "antfu-utils",
+              "pallets-click",
+              "dtolnay-anyhow",
+              "anyhow-planted-fail",
+              "anyhow-zero-tests",
+              "anyhow-structural",
+              "anyhow-deleted-test",
+              "anyhow-new-skip",
+              "anyhow-workflow",
+              "antfu-utils-deleted-test",
+              "antfu-utils-new-skip",
+              "pallets-click-deleted-test",
+              "pallets-click-new-skip",
+          }
+          seen = {str(row.get("id")) for row in rows}
+          missing = sorted(expected - seen)
+          extra = sorted(seen - expected)
+          if missing or extra:
+              raise SystemExit(
+                  f"corpus evidence incomplete: missing={missing} extra={extra}"
+              )
           year, week, _ = datetime.now(timezone.utc).isocalendar()
           out = Path(f"corpus-{year}-W{week:02d}.md")
           lines = ["# Corpus evidence", ""]

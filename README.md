@@ -46,11 +46,15 @@ The pin is the policy ref and the merge-base. The corpus policy file is this
 repo's file, not the target's. The job fails on a false `verified` or any
 other mismatch.
 
-A new manifest row also needs its id in the workflow matrix. The owner adds
-that line; an entry in the manifest alone does not run.
+A new manifest row also needs its id in the workflow matrix. The evidence job
+asserts the exact expected id set, so a partially failed matrix (missing row,
+extra row, or an `error` level) fails the weekly artifact instead of writing a
+green file with 7/13 rows.
 
-The runner hash variable stays empty until a signed runner exists. While it
-is empty, `fetch` and `entries` do not run.
+The runner hash variable stays empty until a signed runner exists. While it is
+empty, `fetch` and `entries` do not run and the `waiting` job **fails** with an
+explicit error: an empty pin must not produce a green workflow that tested
+nothing. The schedule is weekly (`0 6 * * 1`).
 
 ## Probe secrets and variable
 
@@ -80,7 +84,7 @@ last four is empty.
 
 | Variable | Value |
 | --- | --- |
-| `TERACLAW_RUNNER_SHA256` | SHA-256 of the signed archive. Empty keeps the corpus dormant. |
+| `TERACLAW_RUNNER_SHA256` | SHA-256 of the signed archive. Empty fails the `waiting` job; it is never a green no-op. |
 | `TERACLAW_RUNNER_DOWNLOAD_HOST` | `0c3b1eaf3761b5f9aee5c81675890a3f.r2.cloudflarestorage.com`. This is the release account (`R2_ACCOUNT_ID`), not the images account. |
 | `TERACLAW_RUNNER_SOURCE_COMMIT` | `github.sha` of the run that built the runner. |
 | `TERACLAW_RUNNER_SIGNER_WORKFLOW` | Workflow ref in the certificate: `quantumlabssh/teraclaw/.github/workflows/release-verify-runner.yml@<ref>`, or the absolute `https://github.com/...` form. |
