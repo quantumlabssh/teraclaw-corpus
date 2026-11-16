@@ -4,11 +4,13 @@ name: Proof corpus
 # Job fetch holds the CI licence key and runs no target code.
 # Job entries runs pinned third-party repos and has no secrets.
 # Job license-probe runs only this repo and a separate test-account token.
+#
+# The weekly schedule is disabled until TERACLAW_RUNNER_SHA256 points at a
+# tagged runner release. A weekly red run that is expected teaches everyone to
+# ignore red; re-enable the cron once the pin is real.
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 6 * * 1"
 
 permissions:
   contents: read

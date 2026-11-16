@@ -4,11 +4,14 @@ Public hosted proof corpus. It does not run on a self-hosted runner. It does
 not call `teraclaw-verify-action`. That action verifies the repository that
 calls it. This corpus verifies pinned third-party commits instead.
 
-Triggers are `schedule` and `workflow_dispatch` only. A pull request cannot
-start it.
+Triggers are `workflow_dispatch` only for now. A pull request cannot start it.
+The weekly `schedule` is commented out until `TERACLAW_RUNNER_SHA256` points at a
+tagged runner release; a weekly red run that is expected trains people to
+ignore red.
 
 `permissions` is `contents: read`. The corpus does not post GitHub checks. A
-false `verified` fails the job. Weekly evidence is the entry summary artifact.
+false `verified` fails the job. Evidence from a manual run is the entry summary
+artifact.
 
 ## Three jobs
 
@@ -48,13 +51,14 @@ other mismatch.
 
 A new manifest row also needs its id in the workflow matrix. The evidence job
 asserts the exact expected id set, so a partially failed matrix (missing row,
-extra row, or an `error` level) fails the weekly artifact instead of writing a
-green file with 7/13 rows.
+extra row, or an `error` level) fails the artifact instead of writing a green
+file with 7/13 rows.
 
 The runner hash variable stays empty until a signed runner exists. While it is
 empty, `fetch` and `entries` do not run and the `waiting` job **fails** with an
 explicit error: an empty pin must not produce a green workflow that tested
-nothing. The schedule is weekly (`0 6 * * 1`).
+nothing. The cron is disabled until the pin is a tagged runner release; re-enable
+`0 6 * * 1` at that point.
 
 ## Probe secrets and variable
 
