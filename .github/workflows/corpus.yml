@@ -1,6 +1,7 @@
 name: Proof corpus
 
-# Hosted runners only. contents: read. No pull requests.
+# Hosted runners only, pinned to a known image so third-party suites do not
+# drift when ubuntu-latest moves. contents: read. No pull requests.
 # Job fetch holds the CI licence key and runs no target code.
 # Job entries runs pinned third-party repos and has no secrets.
 # Job license-probe runs only this repo and a separate test-account token.
@@ -17,7 +18,7 @@ permissions:
 
 jobs:
   harness:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Check out the harness checks
@@ -31,7 +32,7 @@ jobs:
   # Trusted-code job: no target checkout, setup script, or test runs here.
   # Uses a separate test-account licence, not the owner's.
   license-probe:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Check out the probe
@@ -52,7 +53,7 @@ jobs:
 
   waiting:
     if: vars.TERACLAW_RUNNER_SHA256 == ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Runner pin is not set
         run: |
@@ -62,7 +63,7 @@ jobs:
   fetch:
     needs: harness
     if: vars.TERACLAW_RUNNER_SHA256 != ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Check out the bundle checker
@@ -130,8 +131,12 @@ jobs:
           curl --proto '=https' --tlsv1.2 --max-redirs 0 -fsSL "${runner_url}" -o dist/runner.tar.gz
           echo "${RUNNER_SHA256}  dist/runner.tar.gz" | sha256sum -c -
           curl --proto '=https' --tlsv1.2 --max-redirs 0 -fsSL "${bundle_url}" -o dist/runner.sigstore.json
-          python -m pip install --quiet 'sigstore==4.5.1'
-          python verify-action/verify_runner_bundle.py \
+          # Isolate sigstore from the image's system site-packages: on
+          # ubuntu-24.04 the distro pyOpenSSL is too old for sigstore's
+          # cryptography and fails with `module 'lib' has no attribute 'GEN_EMAIL'`.
+          python -m venv "${RUNNER_TEMP}/sigstore-venv"
+          "${RUNNER_TEMP}/sigstore-venv/bin/python" -m pip install --quiet 'sigstore==4.5.1'
+          "${RUNNER_TEMP}/sigstore-venv/bin/python" verify-action/verify_runner_bundle.py \
             --file dist/runner.tar.gz \
             --bundle dist/runner.sigstore.json \
             --expected-sha256 "${RUNNER_SHA256}" \
@@ -154,7 +159,7 @@ jobs:
   entries:
     needs: fetch
     if: vars.TERACLAW_RUNNER_SHA256 != ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -227,14 +232,16 @@ jobs:
         if: always()
         with:
           name: corpus-entry-${{ matrix.entry }}
-          path: ${{ runner.temp }}/corpus/${{ matrix.entry }}.summary.json
+          path: |
+            ${{ runner.temp }}/corpus/${{ matrix.entry }}.summary.json
+            ${{ runner.temp }}/corpus/${{ matrix.entry }}.json
           retention-days: 90
           if-no-files-found: warn
 
   evidence:
     needs: entries
     if: always() && needs.entries.result != 'skipped'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
