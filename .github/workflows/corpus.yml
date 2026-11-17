@@ -131,8 +131,12 @@ jobs:
           curl --proto '=https' --tlsv1.2 --max-redirs 0 -fsSL "${runner_url}" -o dist/runner.tar.gz
           echo "${RUNNER_SHA256}  dist/runner.tar.gz" | sha256sum -c -
           curl --proto '=https' --tlsv1.2 --max-redirs 0 -fsSL "${bundle_url}" -o dist/runner.sigstore.json
-          python -m pip install --quiet 'sigstore==4.5.1'
-          python verify-action/verify_runner_bundle.py \
+          # Isolate sigstore from the image's system site-packages: on
+          # ubuntu-24.04 the distro pyOpenSSL is too old for sigstore's
+          # cryptography and fails with `module 'lib' has no attribute 'GEN_EMAIL'`.
+          python -m venv "${RUNNER_TEMP}/sigstore-venv"
+          "${RUNNER_TEMP}/sigstore-venv/bin/python" -m pip install --quiet 'sigstore==4.5.1'
+          "${RUNNER_TEMP}/sigstore-venv/bin/python" verify-action/verify_runner_bundle.py \
             --file dist/runner.tar.gz \
             --bundle dist/runner.sigstore.json \
             --expected-sha256 "${RUNNER_SHA256}" \
