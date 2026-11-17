@@ -1,9 +1,12 @@
 setup:
-  - name: setup venv
-    # Use uv rather than `python -m venv`: the hosted image has Python but not
-    # always ensurepip/python3-venv, and this entry only needs the venv as an
-    # install target.
-    command: uv venv .venv && uv pip install --python .venv/bin/python -e . pytest freezegun
+  # The verifier runs each command as argv, not through a shell, so `&&` and
+  # shell redirection are not available. Split the venv creation from the
+  # install instead of chaining them.
+  - name: create venv
+    command: uv venv .venv
+    timeout_s: 300
+  - name: install
+    command: uv pip install --python .venv/bin/python -e . pytest freezegun
     timeout_s: 600
 checks:
   - type: command
