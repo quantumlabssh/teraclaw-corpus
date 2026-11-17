@@ -1,6 +1,9 @@
 setup:
   - name: setup venv
-    command: python -m venv .venv && .venv/bin/pip install --disable-pip-version-check -e . pytest freezegun
+    # Use uv rather than `python -m venv`: the hosted image has Python but not
+    # always ensurepip/python3-venv, and this entry only needs the venv as an
+    # install target.
+    command: uv venv .venv && uv pip install --python .venv/bin/python -e . pytest freezegun
     timeout_s: 600
 checks:
   - type: command
