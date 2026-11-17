@@ -232,7 +232,9 @@ jobs:
         if: always()
         with:
           name: corpus-entry-${{ matrix.entry }}
-          path: ${{ runner.temp }}/corpus/${{ matrix.entry }}.summary.json
+          path: |
+            ${{ runner.temp }}/corpus/${{ matrix.entry }}.summary.json
+            ${{ runner.temp }}/corpus/${{ matrix.entry }}.json
           retention-days: 90
           if-no-files-found: warn
 
