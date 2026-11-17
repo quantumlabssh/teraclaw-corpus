@@ -2,6 +2,13 @@ setup:
   - name: setup install
     command: npm install --no-audit --no-fund
     timeout_s: 600
+  # is-plain-obj's 2021 devDependencies include tsd 0.14, which bundles
+  # TypeScript 4.0. A fresh `npm install` resolves @types/node to the current
+  # major, whose declarations need TS 5.6, so `tsd` reports thousands of type
+  # errors before the real tests run. Pin the 2021 @types/node line.
+  - name: pin type-test deps
+    command: npm install --no-save --no-audit --no-fund @types/node@16.11.7
+    timeout_s: 300
 checks:
   - type: command
     name: npm-test

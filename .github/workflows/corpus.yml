@@ -1,6 +1,7 @@
 name: Proof corpus
 
-# Hosted runners only. contents: read. No pull requests.
+# Hosted runners only, pinned to a known image so third-party suites do not
+# drift when ubuntu-latest moves. contents: read. No pull requests.
 # Job fetch holds the CI licence key and runs no target code.
 # Job entries runs pinned third-party repos and has no secrets.
 # Job license-probe runs only this repo and a separate test-account token.
@@ -17,7 +18,7 @@ permissions:
 
 jobs:
   harness:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Check out the harness checks
@@ -31,7 +32,7 @@ jobs:
   # Trusted-code job: no target checkout, setup script, or test runs here.
   # Uses a separate test-account licence, not the owner's.
   license-probe:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Check out the probe
@@ -52,7 +53,7 @@ jobs:
 
   waiting:
     if: vars.TERACLAW_RUNNER_SHA256 == ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Runner pin is not set
         run: |
@@ -62,7 +63,7 @@ jobs:
   fetch:
     needs: harness
     if: vars.TERACLAW_RUNNER_SHA256 != ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Check out the bundle checker
@@ -154,7 +155,7 @@ jobs:
   entries:
     needs: fetch
     if: vars.TERACLAW_RUNNER_SHA256 != ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -234,7 +235,7 @@ jobs:
   evidence:
     needs: entries
     if: always() && needs.entries.result != 'skipped'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
